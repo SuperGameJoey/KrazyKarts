@@ -2,6 +2,7 @@
 
 
 #include "GoKart.h"
+#include "Engine/World.h"
 
 // Sets default values
 AGoKart::AGoKart()
@@ -35,17 +36,25 @@ void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 void AGoKart::ApplyRotation(float DeltaTime)
 {
 	// Get rotation
-	float RotationAngle = MaxDegreesPerSecond * DeltaTime * SteeringThrow;
-	FQuat RotationDelta(GetActorUpVector(), FMath::DegreesToRadians(RotationAngle));
+	float DeltaLocation = FVector::DotProduct(GetActorForwardVector(), Velocity) * DeltaTime;
+	float RotationAngle = DeltaLocation / TurningRadius * SteeringThrow;
+	FQuat RotationDelta(GetActorUpVector(), RotationAngle);
 
 	Velocity = RotationDelta.RotateVector(Velocity);
 
 	AddActorWorldRotation(RotationDelta, true);
 }
 
-FVector AGoKart::GetResistance()
+FVector AGoKart::GetAirResistance()
 {
 	return -Velocity.GetSafeNormal() * Velocity.SizeSquared() * DragCoefficient;
+}
+
+FVector AGoKart::GetRollingResistance()
+{
+	float AccelerationDueToGravity = -GetWorld()->GetGravityZ() / 100;
+	float NormalForce = Mass * AccelerationDueToGravity;
+	return -Velocity.GetSafeNormal() * RollingResistanceCoefficient * NormalForce;
 }
 
 // Called every frame
@@ -56,9 +65,11 @@ void AGoKart::Tick(float DeltaTime)
 	// Force based on input from player
 	FVector Force = GetActorForwardVector() * MaxDrivingForce * Throttle;
 	// Calculate and add the air resistance to the force
-	Force += GetResistance();
+	Force += GetAirResistance();
+	Force += GetRollingResistance();
 	
 	FVector Acceleration = Force / Mass;
+	
 	Velocity = Velocity + Acceleration * DeltaTime;
 	
 	ApplyRotation(DeltaTime);

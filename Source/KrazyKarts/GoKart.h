@@ -20,7 +20,8 @@ protected:
 	virtual void BeginPlay() override;
 	void UpdateLocationFromVelocity(float DeltaTime);
 	void ApplyRotation(float DeltaTime);
-	FVector GetResistance();
+	FVector GetAirResistance();
+	FVector GetRollingResistance();
 
 public:	
 	// Called every frame
@@ -37,13 +38,17 @@ private:
 	UPROPERTY(EditAnywhere)
 	float MaxDrivingForce = 10000;
 
-	// Number of degrees rotated per second at full SteeringThrow
-	UPROPERTY(EditAnywhere)
-	float MaxDegreesPerSecond = 90;
-
-	// amount of resistance to apply, kg/m
+	// amount of air resistance to apply, kg/m
 	UPROPERTY(EditAnywhere)
 	float DragCoefficient = 16; // 10,000 / 25*25
+
+	// amount of rolling resistance to apply, Higher means more resistance
+	UPROPERTY(EditAnywhere)
+	float RollingResistanceCoefficient = 0.015; // Tires on Concrete
+
+	// Size of the turning circle in meters
+	UPROPERTY(EditAnywhere)
+	float TurningRadius = 50;
 
 	float Throttle;
 	float SteeringThrow;
